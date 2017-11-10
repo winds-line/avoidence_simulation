@@ -108,7 +108,7 @@ def player_go(temp_lr, temp_step):
 
 init_game()
 lr = INITIAL_EPSILON
-RL = DeepQNetwork(2, learning_rate=0.001, reward_decay=0.9, e_greedy=0.9, replace_target_iter=1, memory_size=50000, output_graph=True)
+RL = DeepQNetwork(13, learning_rate=0.001, reward_decay=0.9, e_greedy=0.9, replace_target_iter=1, memory_size=50000, output_graph=True)
 observation_init = pygame.surfarray.array3d(pygame.display.get_surface())
 observation_init = cv2.cvtColor(observation_init, cv2.COLOR_BGR2GRAY)
 ret1, observation_init = cv2.threshold(cv2.resize(observation_init, (80, 80)), 1, 255, cv2.THRESH_BINARY)
@@ -129,13 +129,13 @@ while 1:
     observation = pygame.surfarray.array3d(pygame.display.get_surface())
     observation = cv2.cvtColor(observation, cv2.COLOR_BGR2GRAY)
     ret, observation = cv2.threshold(cv2.resize(observation, (80, 80)), 1, 255, cv2.THRESH_BINARY)
-    s_t1 = np.append(observation, s_t[:, :, :3], axis=2)
+    s_t1 = np.append(observation, s_t[:, :, :3], axis=1)
     RL.store_transition(s_t, a, r, s_t1)
     s_t = s_t1
     step += 1
     total_reward += r
     if Terminal:
-        s_t = np.stack((observation, observation, observation, observation), axis=2)
+        s_t = np.stack((observation, observation, observation, observation), axis=1)
         total_reward = 0.0
     time.sleep(sleep_time)
     for event in pygame.event.get():
@@ -143,11 +143,11 @@ while 1:
             pygame.quit()
             exit(0)
 
-RL.plot_cost()
-import matplotlib.pyplot as plt
-plt.plot(np.arange(len(reward_list)), reward_list)
-plt.ylabel('Reward')
-plt.xlabel('training steps')
-plt.show()
-print('game over')
-print(step)
+# RL.plot_cost()
+# import matplotlib.pyplot as plt
+# plt.plot(np.arange(len(reward_list)), reward_list)
+# plt.ylabel('Reward')
+# plt.xlabel('training steps')
+# plt.show()
+# print('game over')
+# print(step)
