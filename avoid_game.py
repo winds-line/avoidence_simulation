@@ -101,7 +101,7 @@ def player_go(temp_lr, temp_step):
             die = True
             break
     if step >= OBSERVE:
-        loss = RL.learn(lr)
+        loss = RL.learn(temp_lr)
         print('step:', step, 'reward', reward, 'action', action, 'lr:', lr, 'loss', loss)
     return reward, die, action, lr
 
