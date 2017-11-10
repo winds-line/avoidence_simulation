@@ -1,6 +1,7 @@
 import math
 import random
 
+
 def left_15(x, y, x_d, y_d, speed):
     x = x + 5 * x_d * speed
     y = y + 19 * y_d
