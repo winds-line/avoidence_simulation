@@ -7,11 +7,11 @@ import math
 import numpy as np
 from RL_brain_memory import DeepQNetwork
 
-obstacle_num = 10
+obstacle_num = 12
 obstacles = []
 obstacle_positions_x = []
 obstacle_positions_y = []
-sleep_time = 0.1
+sleep_time = 0
 
 pygame.init()
 width, height = 400, 800
@@ -19,12 +19,11 @@ screen = pygame.display.set_mode((width, height))
 player = pygame.image.load('ball1.png')
 position_x = np.zeros(1)
 position_y = np.zeros(1)
-OBSERVE = 100000 # timesteps to observe before training
-EXPLORE = 3000000 # frames over which to anneal epsilon
-FINAL_EPSILON = 0.0001 # final value of epsilon
-INITIAL_EPSILON = 0.1 # starting value of epsilon
+OBSERVE = 50000  # timesteps to observe before training
+EXPLORE = 2000000  # frames over which to anneal epsilon
+FINAL_EPSILON = 0.0001  # final value of epsilon
+INITIAL_EPSILON = 0.1  # starting value of epsilon
 REPLAY_MEMORY = 50000
-
 
 
 def init_game():
@@ -65,6 +64,7 @@ def obstacle_go():
 
 
 def player_go(temp_lr, temp_step):
+    max_Q = 0
     if temp_step <= OBSERVE + EXPLORE and temp_step >= OBSERVE:
         temp_lr -= (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORE
     if temp_lr < 0.0001:
@@ -75,7 +75,7 @@ def player_go(temp_lr, temp_step):
         if random.random() < temp_lr:
             action = random.randint(0, 13)
         else:
-            action = RL.choose_action(s_t)
+            action, max_Q = RL.choose_action(s_t)
 
     die = False
     if action <= 12:
@@ -87,10 +87,11 @@ def player_go(temp_lr, temp_step):
         # print('y', temp_y)
         position_y[0] -= temp_y
     else:
-        temp_y = - 2
+        temp_y = - 5
     if position_x[0] < 0 or position_x[0] > width - 20 or position_y[0] < 0 or position_y[0] > height - 20:
         position_x[0] = width / 2 - 10
         position_y[0] = 780
+        die = True
     reward = temp_y/20
     for index in range(obstacle_num):
         dist = math.pow(obstacle_positions_x[index] - position_x[0], 2) + math.pow(obstacle_positions_y[index] - position_y[0], 2)
@@ -102,7 +103,7 @@ def player_go(temp_lr, temp_step):
             break
     if step >= OBSERVE:
         loss = RL.learn(temp_lr)
-        print('step:', step, 'reward', reward, 'action', action, 'lr:', lr, 'loss', loss)
+        print('step:', step, 'reward', reward, 'action', action, 'lr:', lr, 'loss', loss, 'max_Q', max_Q)
     return reward, die, action, lr
 
 
@@ -129,13 +130,18 @@ while 1:
     observation = pygame.surfarray.array3d(pygame.display.get_surface())
     observation = cv2.cvtColor(observation, cv2.COLOR_BGR2GRAY)
     ret, observation = cv2.threshold(cv2.resize(observation, (80, 80)), 1, 255, cv2.THRESH_BINARY)
-    s_t1 = np.append(observation, s_t[:, :, :3], axis=1)
+    observation = np.reshape(observation, (80, 80, 1))
+    print('step:', step)
+    s_t1 = np.append(observation, s_t[:, :, :3], axis=2)
     RL.store_transition(s_t, a, r, s_t1)
     s_t = s_t1
     step += 1
     total_reward += r
     if Terminal:
-        s_t = np.stack((observation, observation, observation, observation), axis=1)
+        observation = np.reshape(observation, (80, 80))
+        s_t = np.stack((observation, observation, observation, observation), axis=2)
+        reward_list.append(total_reward)
+        print('total_reward:', total_reward)
         total_reward = 0.0
     time.sleep(sleep_time)
     for event in pygame.event.get():
@@ -143,11 +149,12 @@ while 1:
             pygame.quit()
             exit(0)
 
-# RL.plot_cost()
-# import matplotlib.pyplot as plt
-# plt.plot(np.arange(len(reward_list)), reward_list)
-# plt.ylabel('Reward')
-# plt.xlabel('training steps')
-# plt.show()
-# print('game over')
-# print(step)
+
+RL.plot_cost()
+import matplotlib.pyplot as plt
+plt.plot(np.arange(len(reward_list)), reward_list)
+plt.ylabel('Reward')
+plt.xlabel('training steps')
+plt.show()
+print('game over')
+print(step)

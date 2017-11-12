@@ -56,7 +56,7 @@ class DeepQNetwork:
         self.sess.run(tf.initialize_all_variables())
 
         self.cost_his = []
-        # self.saver = tf.train.Saver()
+        self.saver = tf.train.Saver()
         # self.saver.restore(self.sess, 'record/save_net.ckpt')
 
     def _build_net(self):
@@ -201,15 +201,16 @@ class DeepQNetwork:
         self.learn_step_counter += 1
         return my_loss
 
-    # def plot_cost(self):
-    #     import matplotlib.pyplot as plt
-    #     plt.plot(np.arange(len(self.cost_his)), self.cost_his)
-    #     plt.ylabel('Cost')
-    #     plt.xlabel('training steps')
-    #     plt.show()
+    def plot_cost(self):
+        import matplotlib.pyplot as plt
+        plt.plot(np.arange(len(self.cost_his)), self.cost_his)
+        plt.ylabel('Cost')
+        plt.xlabel('training steps')
+        plt.show()
+
 
 if __name__ == '__main__':
-    DQN = DeepQNetwork(2, output_graph=True)
+    DQN = DeepQNetwork(13, output_graph=True)
 
 
 
